@@ -97,7 +97,7 @@ export class LiteSingleEngine extends EventEmitter implements LiteEngine {
           this.queries.delete(id.toString('hex'));
           ex.reject(new Error('Timeout'));
         }
-      }, args.timeout);
+      }, args.timeout).unref();
     });
   }
 
@@ -116,11 +116,7 @@ export class LiteSingleEngine extends EventEmitter implements LiteEngine {
       ? new ADNLClientWS(this.host, this.publicKey)
       : new ADNLClientTCP(this.host, this.publicKey);
 
-    void client
-      .connect()
-      // eslint-disable-next-line no-console
-      .catch((err) => console.error('unexpected error while connecting to lite server', err));
-
+    void client.connect();
     client.on('connect', () => {
       if (this.currentClient === client) {
         this.onConnected();
@@ -152,7 +148,7 @@ export class LiteSingleEngine extends EventEmitter implements LiteEngine {
       setTimeout(() => {
         this.closed = false;
         this.connect();
-      }, 30000);
+      }, this.reconnectTimeout).unref();
     });
 
     this.currentClient = client;
@@ -203,6 +199,6 @@ export class LiteSingleEngine extends EventEmitter implements LiteEngine {
       if (!this.closed) {
         this.connect();
       }
-    }, this.reconnectTimeout);
+    }, this.reconnectTimeout).unref();
   }
 }
